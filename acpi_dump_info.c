@@ -6,6 +6,8 @@
 #include <linux/module.h>
 #include <asm/uaccess.h>
 #include <linux/seq_file.h>
+#include <linux/proc_fs.h>
+#include <linux/version.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Dumps information of the ACPI handles for devices");
@@ -46,12 +48,21 @@ static int meh_open(struct inode *inode, struct file *file) {
 	return single_open(file, meh_show, NULL);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+static struct proc_ops fops = {
+	.proc_open = meh_open,
+	.proc_read = seq_read,
+	.proc_lseek = seq_lseek,
+	.proc_release = single_release
+};
+#else
 static struct file_operations fops = {
 	.open    = meh_open,
 	.read    = seq_read,
 	.llseek  = seq_lseek,
 	.release = single_release,
 };
+#endif
 
 static int __init meh_init(void) {
 	struct proc_dir_entry *acpi_entry;
